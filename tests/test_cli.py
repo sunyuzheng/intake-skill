@@ -24,6 +24,9 @@ def test_parser_accepts_required_commands() -> None:
     assert run_day_defaults.asr_engine == "mlx"
     assert run_day_defaults.postprocess_engine == "codex"
     assert parser.parse_args(["install-cron", "--dry-run"]).dry_run is True
+    dashboard_args = parser.parse_args(["dashboard", "--port", "8766"])
+    assert dashboard_args.command == "dashboard"
+    assert dashboard_args.port == 8766
     assert parser.parse_args(["make-sample-audio", "--seconds", "1"]).seconds == 1
 
 

@@ -12,6 +12,7 @@ from .asr import run_asr
 from .audio import make_sample_audio
 from .config import DEFAULT_SOURCE_DIR, load_config
 from .cron import append_cron
+from .dashboard import serve_dashboard
 from .postprocess import run_postprocess
 from .sync import sync_voice_memos
 
@@ -66,6 +67,11 @@ def build_parser() -> argparse.ArgumentParser:
     add_common_paths(cron)
     cron.add_argument("--dry-run", action="store_true")
 
+    dashboard = subparsers.add_parser("dashboard", help="Serve a local read-only monitoring dashboard")
+    add_common_paths(dashboard)
+    dashboard.add_argument("--host", default="127.0.0.1", help="Dashboard bind host")
+    dashboard.add_argument("--port", type=int, default=8765, help="Dashboard port")
+
     sample = subparsers.add_parser("make-sample-audio", help="Create synthetic sample audio with no private content")
     add_common_paths(sample)
     sample.add_argument("--output", default="examples/sample.wav")
@@ -111,6 +117,9 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         return {"command": "run-day", "day": args.date, "steps": [sync_summary, asr_summary, post_summary]}
     if args.command == "install-cron":
         return append_cron(config.repo_root, dry_run=args.dry_run)
+    if args.command == "dashboard":
+        server = serve_dashboard(args.host, args.port, config=config)
+        return {"command": "dashboard", "url": server.url}
     if args.command == "make-sample-audio":
         return make_sample_audio(Path(args.output).expanduser().resolve(), seconds=args.seconds)
     raise ValueError(f"unsupported command: {args.command}")
